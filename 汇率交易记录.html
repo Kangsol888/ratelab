@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>💱 汇率交易记录</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --primary:#0f2d4a;
+  --primary2:#1a4e7c;
+  --accent:#10b981;
+  --accent2:#f59e0b;
+  --danger:#ef4444;
+  --bg:#eef2f7;
+  --card:#fff;
+  --border:#e2e8f0;
+  --txt:#1e293b;
+  --txt2:#64748b;
+  --txt3:#94a3b8;
+  --r:14px;
+  --sh:0 2px 16px rgba(0,0,0,.07);
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px}
+body{padding-bottom:90px}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+
+/* ─── Top Bar ───────────────────────────────── */
+.topbar{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary2) 100%);
+  color:#fff;padding:14px 18px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,.25)
+}
+.topbar h1{font-size:17px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:6px}
+.topbar .sub{font-size:11px;opacity:.65;margin-top:2px}
+.profit-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;padding:6px 12px;text-align:right}
+.profit-badge .plabel{font-size:10px;opacity:.7;letter-spacing:.5px;text-transform:uppercase}
+.profit-badge .pval{font-size:18px;font-weight:800;color:#6ee7b7;margin-top:1px}
+.profit-badge .pval.pos{color:#6ee7b7}
+.profit-badge .pval.neg{color:#fca5a5}
+
+/* ─── Tab Bar ───────────────────────────────── */
+.tabbar{
+  display:flex;background:#fff;
+  border-bottom:1.5px solid var(--border);
+  position:sticky;top:64px;z-index:99;
+}
+.tabbar button{
+  flex:1;padding:12px 4px;border:none;background:transparent;
+  color:var(--txt3);font-size:12px;font-weight:700;cursor:pointer;
+  transition:.2s;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.tabbar button .ticon{font-size:16px}
+.tabbar button.on{color:var(--primary2);border-bottom-color:var(--primary2)}
+.tabbar button:active{background:#f8fafc}
+
+/* ─── Pages ─────────────────────────────────── */
+.page{display:none;padding:14px}
+.page.on{display:block}
+
+/* ─── Card ──────────────────────────────────── */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);
+  padding:16px;margin-bottom:14px;border:1px solid var(--border)}
+.ctitle{font-size:11px;font-weight:800;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.7px;margin-bottom:13px;display:flex;align-items:center;gap:5px}
+
+/* ─── Pair Chips ────────────────────────────── */
+.pair-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:2px}
+.pair-chip{
+  padding:8px 13px;border:2px solid var(--border);border-radius:30px;
+  background:#fff;font-size:12px;font-weight:700;cursor:pointer;
+  transition:.18s;color:var(--txt2);white-space:nowrap;
+  user-select:none;
+}
+.pair-chip.on{border-color:var(--primary2);background:#eff6ff;color:var(--primary2)}
+.pair-chip:active{transform:scale(.96)}
+
+/* ─── Inputs ─────────────────────────────────── */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px}
+.frow.full{grid-template-columns:1fr}
+.frow.three{grid-template-columns:1fr 1fr 1fr}
+label.lbl{display:block;font-size:11px;font-weight:700;color:var(--txt2);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+input,select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);
+  border-radius:10px;font-size:14px;color:var(--txt);background:#fff;
+  outline:none;transition:.18s;-webkit-appearance:none;
+}
+input:focus,select:focus{border-color:var(--primary2);background:#fafcff}
+input[readonly]{background:#f8fafc;color:var(--txt2);border-color:#e8edf3}
+input::placeholder{color:var(--txt3)}
+
+/* ─── Calc Box ──────────────────────────────── */
+.calc-box{
+  background:linear-gradient(135deg,#f0f9ff,#f0fdf4);
+  border:1.5px solid #bfdbfe;border-radius:12px;
+  padding:14px;margin-bottom:14px
+}
+.calc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.calc-row:last-child{margin-bottom:0}
+.clabel{font-size:12px;color:var(--txt2);font-weight:600}
+.cval{font-size:15px;font-weight:800;color:var(--primary)}
+.cval.g{color:var(--accent);font-size:17px}
+.cval.r{color:var(--danger);font-size:17px}
+.cdiv{border:none;border-top:1px dashed #cbd5e1;margin:8px 0}
+.formula-preview{
+  font-size:13px;font-weight:700;color:#6366f1;
+  background:#eef2ff;border:1px solid #c7d2fe;
+  border-radius:8px;padding:6px 12px;
+  text-align:center;margin-bottom:10px;letter-spacing:.3px;
+}
+.op-pill{
+  display:inline-block;padding:2px 8px;border-radius:12px;
+  font-size:11px;font-weight:800;margin-left:5px;
+}
+.op-mul{background:#eef2ff;color:#4f46e5;border:1px solid #c7d2fe}
+.op-div{background:#fdf2f8;color:#db2777;border:1px solid #fbcfe8}
+
+/* ─── Buttons ───────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 18px;border-radius:11px;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:.18s;white-space:nowrap;
+  user-select:none;
+}
+.btn:active{transform:scale(.97)}
+.btn-p{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 3px 12px rgba(26,78,124,.3)}
+.btn-g{background:linear-gradient(135deg,#059669,var(--accent));color:#fff;box-shadow:0 3px 12px rgba(16,185,129,.25)}
+.btn-r{background:var(--danger);color:#fff}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--txt2);padding:8px 14px;font-size:12px}
+.btn-ghost:hover{border-color:var(--primary2);color:var(--primary2)}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn-full{width:100%}
+
+/* ─── Tx List ───────────────────────────────── */
+.filter-bar{display:flex;gap:7px;margin-bottom:13px;overflow-x:auto;padding-bottom:2px}
+.filter-bar::-webkit-scrollbar{display:none}
+.fchip{
+  padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;
+  font-size:12px;font-weight:700;background:#fff;cursor:pointer;
+  white-space:nowrap;color:var(--txt2);transition:.15s;flex-shrink:0;
+}
+.fchip.on{background:var(--primary2);border-color:var(--primary2);color:#fff}
+
+.tx-item{
+  background:#fff;border:1px solid var(--border);border-radius:13px;
+  padding:14px;margin-bottom:10px;position:relative;
+  box-shadow:0 1px 6px rgba(0,0,0,.04)
+}
+.tx-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.tx-pair{font-weight:800;font-size:16px;color:var(--primary)}
+.tx-meta{font-size:11px;color:var(--txt3);margin-top:2px}
+.tx-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+.tx-field .lf{font-size:11px;color:var(--txt3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.tx-field .vf{font-size:14px;font-weight:700;color:var(--txt);margin-top:2px}
+.tx-field .vf.green{color:var(--accent)}
+.tx-field .vf.red{color:var(--danger)}
+.tx-actions{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.b-buy{background:#f0fdf9;color:#059669;border:1px solid #6ee7b7}
+.b-sell{background:#fffbeb;color:#b45309;border:1px solid #fcd34d}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--txt3)}
+.empty-state .ei{font-size:44px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* ─── Summary ───────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:13px;padding:15px 12px;text-align:center;
+  border:1px solid var(--border);box-shadow:var(--sh)}
+.stat-card .slabel{font-size:10px;color:var(--txt2);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.stat-card .sval{font-size:22px;font-weight:900;margin-top:5px;letter-spacing:-.5px}
+.stat-card.blue .sval{color:var(--primary2)}
+.stat-card.green .sval{color:var(--accent)}
+
+.ps-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 14px;border-radius:11px;background:#f8fafc;
+  border:1px solid var(--border);margin-bottom:8px
+}
+.ps-item .pname{font-weight:800;font-size:14px;color:var(--txt)}
+.ps-item .psub{font-size:11px;color:var(--txt3);margin-top:2px}
+.ps-item .pp{font-size:16px;font-weight:900}
+.ps-item .pp.g{color:var(--accent)}
+.ps-item .pp.r{color:var(--danger)}
+.ps-item .plabel{font-size:10px;color:var(--txt3);text-align:right}
+
+/* ─── Rate Settings ─────────────────────────── */
+.rate-item{background:#fff;border:1px solid var(--border);border-radius:13px;
+  padding:14px;margin-bottom:10px;box-shadow:var(--sh)}
+.rate-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.rate-pair{font-weight:800;font-size:16px;color:var(--primary)}
+.spread-badge{font-size:11px;font-weight:700;color:var(--accent);
+  background:#f0fdf9;padding:3px 10px;border-radius:20px;border:1px solid #a7f3d0}
+.rate-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.buy-f input{border-color:#6ee7b7;color:#059669;font-weight:700;font-size:15px;text-align:center}
+.sell-f input{border-color:#fcd34d;color:#b45309;font-weight:700;font-size:15px;text-align:center}
+.rate-footer{display:flex;justify-content:space-between;align-items:center}
+.op-toggle{display:flex;gap:6px}
+.op-btn{
+  padding:7px 16px;border-radius:20px;font-size:13px;font-weight:800;
+  cursor:pointer;border:2px solid var(--border);background:#fff;
+  color:var(--txt2);transition:.15s;user-select:none;
+}
+.op-btn.mul.on{border-color:#6366f1;background:#eef2ff;color:#4f46e5}
+.op-btn.div.on{border-color:#ec4899;background:#fdf2f8;color:#db2777}
+.op-btn:active{transform:scale(.95)}
+
+.add-pair-box{border:2px dashed var(--border);border-radius:13px;padding:16px;background:#fafcff}
+.add-pair-box .ctitle{margin-bottom:12px}
+
+/* ─── Confirm Dialog ────────────────────────── */
+.confirm-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:300;align-items:center;justify-content:center;padding:20px;
+}
+.confirm-overlay.show{display:flex}
+.confirm-box{
+  background:#fff;border-radius:18px;padding:24px 20px;
+  width:100%;max-width:320px;box-shadow:0 20px 50px rgba(0,0,0,.25);
+  text-align:center;
+}
+.confirm-box .cicon{font-size:36px;margin-bottom:10px}
+.confirm-box h3{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--txt)}
+.confirm-box p{font-size:13px;color:var(--txt2);margin-bottom:20px}
+.confirm-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ─── Receipt Sheet ─────────────────────────── */
+.sheet-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:200;align-items:flex-end;
+}
+.sheet-overlay.show{display:flex}
+.sheet{
+  background:#fff;border-radius:22px 22px 0 0;
+  padding:20px;width:100%;max-height:82vh;overflow-y:auto;
+  animation:slideUp .25s ease
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:40px;height:4px;background:#e2e8f0;border-radius:4px;
+  margin:0 auto 16px}
+.sheet-title{font-size:16px;font-weight:800;color:var(--primary);margin-bottom:14px}
+.receipt-box{
+  background:#0f172a;color:#e2e8f0;padding:16px 14px;border-radius:12px;
+  font-family:'Courier New',monospace;font-size:12.5px;line-height:1.75;
+  white-space:pre;overflow-x:auto;margin-bottom:14px;
+}
+.sheet-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ─── Toast ─────────────────────────────────── */
+.toast{
+  position:fixed;bottom:100px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:#1e293b;color:#fff;padding:10px 22px;
+  border-radius:30px;font-size:13px;font-weight:600;
+  opacity:0;transition:.28s;z-index:400;pointer-events:none;
+  white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2)
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ─── Calendar ──────────────────────────────── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav .month-title{font-size:16px;font-weight:800;color:var(--primary)}
+.cal-nav button{background:none;border:1.5px solid var(--border);border-radius:9px;
+  padding:6px 13px;font-size:16px;cursor:pointer;color:var(--txt2);transition:.15s}
+.cal-nav button:active{background:#f1f5f9}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{text-align:center;font-size:10px;font-weight:800;color:var(--txt3);
+  padding:4px 0;text-transform:uppercase;letter-spacing:.4px}
+.cal-day{
+  min-height:54px;border-radius:10px;padding:5px 4px;cursor:pointer;
+  border:1.5px solid transparent;transition:.15s;background:#fff;
+  display:flex;flex-direction:column;align-items:center;
+}
+.cal-day:hover{border-color:var(--primary2);background:#eff6ff}
+.cal-day.empty{background:transparent;cursor:default;border-color:transparent}
+.cal-day.today{border-color:var(--primary2);background:#eff6ff}
+.cal-day.has-profit{background:#f0fdf9;border-color:#a7f3d0}
+.cal-day.has-loss{background:#fff5f5;border-color:#fecaca}
+.cal-day.selected{border-color:var(--primary);background:#dbeafe;box-shadow:0 0 0 2px var(--primary2)}
+.cal-day .daynum{font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:2px}
+.cal-day.today .daynum{color:var(--primary2)}
+.cal-day .dayprofit{font-size:10px;font-weight:800;line-height:1.2;text-align:center}
+.cal-day .dayprofit.p{color:#059669}
+.cal-day .dayprofit.n{color:var(--danger)}
+.cal-day .daydot{width:5px;height:5px;border-radius:50%;margin-top:2px}
+.cal-day .daydot.p{background:#10b981}
+.cal-day .daydot.n{background:var(--danger)}
+.day-detail{margin-top:14px}
+.day-detail-title{font-size:13px;font-weight:800;color:var(--primary);margin-bottom:10px;
+  display:flex;align-items:center;justify-content:space-between}
+.day-detail-title .dp{font-size:15px;font-weight:900}
+.day-detail-title .dp.g{color:#059669}
+.day-detail-title .dp.r{color:var(--danger)}
+
+/* ─── Summary profit color fix ──────────────── */
+.stat-card.green .sval.neg{color:var(--danger)}
+
+@media(min-width:540px){
+  body{max-width:540px;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.1)}
+  .stat-grid{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div>
+    <h1>💱 汇率交易记录</h1>
+    <div class="sub" id="topDate">Loading...</div>
+  </div>
+  <div class="profit-badge">
+    <div class="plabel">今日利润</div>
+    <div class="pval" id="todayProfit">—</div>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tabbar">
+  <button id="tab-new-btn" class="on" onclick="switchTab('new',this)">
+    <span class="ticon">➕</span>新交易
+  </button>
+  <button id="tab-hist-btn" onclick="switchTab('hist',this)">
+    <span class="ticon">📋</span>记录
+  </button>
+  <button id="tab-sum-btn" onclick="switchTab('sum',this)">
+    <span class="ticon">📊</span>汇总
+  </button>
+  <button id="tab-cal-btn" onclick="switchTab('cal',this)">
+    <span class="ticon">📅</span>日历
+  </button>
+  <button id="tab-rate-btn" onclick="switchTab('rate',this)">
+    <span class="ticon">⚙️</span>汇率
+  </button>
+</div>
+
+<!-- ══════════ PAGE: 新交易 ══════════ -->
+<div id="page-new" class="page on">
+
+  <div class="card">
+    <div class="ctitle">💱 货币对</div>
+    <div class="pair-wrap" id="pairWrap"></div>
+  </div>
+
+  <div class="card">
+    <div class="frow">
+      <div>
+        <label class="lbl" id="lAmt">金额</label>
+        <input type="number" id="iAmt" inputmode="decimal" placeholder="0.00" oninput="calcLive()"/>
+      </div>
+      <div>
+        <label class="lbl" id="lRate">汇率</label>
+        <input type="number" id="iRate" inputmode="decimal" placeholder="0.0000" oninput="calcLive()"/>
+      </div>
+    </div>
+
+    <div class="formula-preview" id="formulaPreview">选择货币对后自动显示计算公式</div>
+    <div class="calc-box">
+      <div class="calc-row">
+        <span class="clabel">💰 总额</span>
+        <span class="cval" id="cTotal">—</span>
+      </div>
+      <hr class="cdiv"/>
+      <div class="calc-row">
+        <span class="clabel">📈 本笔利润</span>
+        <span class="cval" id="cProfit">—</span>
+      </div>
+    </div>
+
+    <div class="frow">
+      <div>
+        <label class="lbl">客户名 (可选)</label>
+        <input type="text" id="iCust" placeholder="Customer"/>
+      </div>
+      <div>
+        <label class="lbl">日期</label>
+        <input type="date" id="iDate"/>
+      </div>
+    </div>
+    <div class="frow full" style="margin-bottom:14px">
+      <div>
+        <label class="lbl">备注 (可选)</label>
+        <input type="text" id="iNote" placeholder="Remarks..."/>
+      </div>
+    </div>
+
+    <button class="btn btn-p btn-full" onclick="addTx()">✅ 记录交易</button>
+  </div>
+
+</div>
+
+<!-- ══════════ PAGE: 记录 ══════════ -->
+<div id="page-hist" class="page">
+  <div class="filter-bar" id="filterBar"></div>
+  <div id="txList"></div>
+</div>
+
+<!-- ══════════ PAGE: 汇总 ══════════ -->
+<div id="page-sum" class="page">
+
+  <!-- 数据备份 -->
+  <div class="card" style="border:2px solid #c7d2fe;background:#fafbff">
+    <div class="ctitle" style="color:#4f46e5">💾 数据备份 / 恢复</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">
+      定期导出备份，换设备时导入即可恢复所有数据。
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <button class="btn btn-full" style="background:#4f46e5;color:#fff;font-size:13px" onclick="exportData()">
+        📤 导出备份
+      </button>
+      <button class="btn btn-full btn-ghost" style="font-size:13px" onclick="document.getElementById('importFile').click()">
+        📥 导入恢复
+      </button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
+    <div style="font-size:11px;color:var(--txt3);text-align:center" id="backupInfo"></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card blue"><div class="slabel">总交易</div><div class="sval" id="sTotalCount">0</div></div>
+    <div class="stat-card green"><div class="slabel">今日利润</div><div class="sval" id="sTodayP">0.00</div></div>
+    <div class="stat-card blue"><div class="slabel">本月交易</div><div class="sval" id="sMonthCount">0</div></div>
+    <div class="stat-card green"><div class="slabel">本月利润</div><div class="sval" id="sMonthP">0.00</div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">📊 各货币对</div>
+    <div id="pairStats"></div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: 日历 ══════════ -->
+<div id="page-cal" class="page">
+  <div class="card">
+    <div class="cal-nav">
+      <button onclick="calPrev()">‹</button>
+      <span class="month-title" id="calTitle"></span>
+      <button onclick="calNext()">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+  <div id="dayDetail"></div>
+</div>
+
+<!-- ══════════ PAGE: 汇率 ══════════ -->
+<div id="page-rate" class="page">
+  <div id="rateList"></div>
+  <div class="card add-pair-box">
+    <div class="ctitle">➕ 添加新货币对</div>
+    <div class="frow">
+      <div>
+        <label class="lbl">货币对</label>
+        <input type="text" id="nPair" placeholder="e.g. THB/MYR" style="text-transform:uppercase"/>
+      </div>
+      <div>
+        <label class="lbl">买入汇率</label>
+        <input type="number" id="nBuy" inputmode="decimal" placeholder="0.0000"/>
+      </div>
+    </div>
+    <div class="frow">
+      <div>
+        <label class="lbl">卖出汇率</label>
+        <input type="number" id="nSell" inputmode="decimal" placeholder="0.0000"/>
+      </div>
+      <div>
+        <label class="lbl">备注 (可选)</label>
+        <input type="text" id="nNote" placeholder="..."/>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="lbl" style="margin-bottom:7px">计算方式</label>
+      <div class="op-toggle">
+        <button class="op-btn mul on" id="nOpMul" onclick="pickNewOp('*')">× 乘法 (Multiply)</button>
+        <button class="op-btn div" id="nOpDiv" onclick="pickNewOp('/')">÷ 除法 (Divide)</button>
+      </div>
+    </div>
+    <button class="btn btn-g btn-full" onclick="addPair()">➕ 添加</button>
+  </div>
+</div>
+
+<!-- Receipt Sheet -->
+<div class="sheet-overlay" id="receiptSheet" onclick="sheetClickOutside(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 收据 / Receipt</div>
+    <div class="receipt-box" id="receiptTxt"></div>
+    <div class="sheet-btns">
+      <button class="btn btn-g" id="copyBtn" onclick="doCopy()">📋 复制发客户</button>
+      <button class="btn btn-ghost" onclick="closeSheet()">✖ 关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="confirm-overlay" id="confirmDlg">
+  <div class="confirm-box">
+    <div class="cicon">🗑️</div>
+    <h3>确定删除？</h3>
+    <p id="confirmMsg">此操作无法撤销</p>
+    <div class="confirm-btns">
+      <button class="btn btn-r" id="confirmOk">删除</button>
+      <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+const DEFAULT_RATES = [
+  {pair:"USDT/MYR", buy:4.0000, sell:4.0200, op:"*", note:""},
+  {pair:"MYR/USDT", buy:4.0000, sell:4.0200, op:"/", note:""},
+  {pair:"USD/MYR",  buy:4.4000, sell:4.4200, op:"*", note:""},
+  {pair:"SGD/MYR",  buy:3.2800, sell:3.3000, op:"*", note:""},
+  {pair:"CNY/MYR",  buy:0.6000, sell:0.6100, op:"*", note:""},
+  {pair:"EUR/MYR",  buy:4.8500, sell:4.8700, op:"*", note:""},
+  {pair:"THB/MYR",  buy:0.1200, sell:0.1220, op:"*", note:""},
+];
+
+let rates = loadLS('fx_rates', DEFAULT_RATES);
+let txs   = loadLS('fx_txs',   []);
+let selPair  = rates[0]?.pair || 'USDT/MYR';
+let filtPair = 'all';
+
+function loadLS(key, def){
+  try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }
+  catch(e){ return def; }
+}
+function save(){
+  localStorage.setItem('fx_rates', JSON.stringify(rates));
+  localStorage.setItem('fx_txs',   JSON.stringify(txs));
+}
+
+// ══════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════
+(function init(){
+  const now = new Date();
+  document.getElementById('topDate').textContent =
+    now.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('iDate').value = toDateStr(now);
+  renderPairChips();
+  prefillRate();
+  refreshTodayProfit();
+})();
+
+// ══════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════
+function switchTab(name, btn){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('on'));
+  document.getElementById('page-'+name).classList.add('on');
+  btn.classList.add('on');
+  if(name==='hist') renderHistory();
+  if(name==='sum')  { renderSummary(); updateBackupInfo(); }
+  if(name==='cal')  renderCalendar();
+  if(name==='rate') renderRates();
+}
+
+// ══════════════════════════════════════════════════
+//  PAIR CHIPS
+// ══════════════════════════════════════════════════
+function renderPairChips(){
+  document.getElementById('pairWrap').innerHTML = rates.map(r =>
+    `<button class="pair-chip ${r.pair===selPair?'on':''}" onclick="pickPair('${r.pair}')">${r.pair}</button>`
+  ).join('');
+}
+
+function pickPair(p){
+  selPair = p;
+  renderPairChips();
+  prefillRate();
+  calcLive();
+}
+
+// ══════════════════════════════════════════════════
+//  RATE PRE-FILL
+// ══════════════════════════════════════════════════
+function prefillRate(){
+  const r = getRate(selPair);
+  if(!r) return;
+  const [base, quote] = selPair.split('/');
+  const op    = r.op || '*';
+  const opSym = op==='/' ? '÷' : '×';
+  document.getElementById('lAmt').textContent  = `金额 (${base})`;
+  document.getElementById('lRate').textContent = `汇率 ${opSym} (${base}/${quote})`;
+  document.getElementById('iRate').value = r.sell;
+  const opCls = op==='/' ? 'op-div' : 'op-mul';
+  document.getElementById('formulaPreview').innerHTML =
+    `<span class="${opCls} op-pill">${opSym}</span>&nbsp; 输入金额后自动计算`;
+}
+
+function getRate(pair){ return rates.find(x => x.pair===pair); }
+
+// ══════════════════════════════════════════════════
+//  LIVE CALC
+// ══════════════════════════════════════════════════
+function calcTotal(amt, rate, op){
+  return op==='/' ? amt / rate : amt * rate;
+}
+
+// profit = spread between rate used and the configured buy reference
+function simpleProfit(amt, rate, buyRate, op){
+  if(!buyRate || buyRate===0) return 0;
+  if(op==='/'){
+    // both rates in quote-per-base; profit in quote = amt*(1/buyRate - 1/rate)
+    return amt * (1/buyRate - 1/rate);
+  } else {
+    return (rate - buyRate) * amt;
+  }
+}
+
+function calcLive(){
+  const amt  = parseFloat(document.getElementById('iAmt').value);
+  const rate = parseFloat(document.getElementById('iRate').value);
+  const r    = getRate(selPair);
+  const [base, quote] = selPair.split('/');
+  const op   = r?.op || '*';
+
+  // formula preview (always update)
+  const fpEl = document.getElementById('formulaPreview');
+  const opSym = op==='/' ? '÷' : '×';
+  const opClass = op==='/' ? 'op-div' : 'op-mul';
+  if(amt && rate && !isNaN(amt) && !isNaN(rate)){
+    const tot = calcTotal(amt, rate, op);
+    fpEl.innerHTML = `${fmt(amt)} ${base} <span class="${opClass} op-pill">${opSym}</span> ${rate} = <b>${fmt(tot)} ${quote}</b>`;
+  } else {
+    fpEl.innerHTML = `<span class="${opClass} op-pill">${opSym}</span>&nbsp; ${base} ${opSym} 汇率 = ${quote}`;
+  }
+
+  if(!amt || !rate || isNaN(amt) || isNaN(rate)){
+    document.getElementById('cTotal').textContent  = '—';
+    document.getElementById('cProfit').textContent = '—';
+    document.getElementById('cProfit').className   = 'cval';
+    return;
+  }
+
+  const total  = calcTotal(amt, rate, op);
+  let profit = 0;
+  if(r) profit = simpleProfit(amt, rate, r.buy, op);
+
+  document.getElementById('cTotal').textContent = `${fmt(total)} ${quote}`;
+  const pe = document.getElementById('cProfit');
+  pe.textContent = `${profit>=0?'+':''}${fmt(profit)} ${quote}`;
+  pe.className   = `cval ${profit>=0?'g':'r'}`;
+}
+
+// ══════════════════════════════════════════════════
+//  ADD TRANSACTION
+// ══════════════════════════════════════════════════
+function addTx(){
+  const amt  = parseFloat(document.getElementById('iAmt').value);
+  const rate = parseFloat(document.getElementById('iRate').value);
+  const date = document.getElementById('iDate').value;
+  const cust = document.getElementById('iCust').value.trim();
+  const note = document.getElementById('iNote').value.trim();
+
+  if(!amt || isNaN(amt) || amt<=0){ toast('⚠️ 请输入有效金额'); return; }
+  if(!rate || isNaN(rate) || rate<=0){ toast('⚠️ 请输入有效汇率'); return; }
+  if(!date){ toast('⚠️ 请选择日期'); return; }
+
+  const r = getRate(selPair);
+  const [base, quote] = selPair.split('/');
+  const op     = r?.op || '*';
+  const total  = calcTotal(amt, rate, op);
+  const profit = r ? simpleProfit(amt, rate, r.buy, op) : 0;
+
+  const tx = {
+    id:     Date.now(),
+    date,
+    time:   new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    pair:   selPair,
+    op,
+    amount: amt,
+    rate,
+    total,
+    base,
+    quote,
+    customer: cust,
+    notes:    note,
+    profit,
+  };
+
+  txs.unshift(tx);
+  save();
+  refreshTodayProfit();
+  // nudge backup every 10 transactions
+  if(txs.length % 10 === 0){
+    const last = localStorage.getItem('fx_last_backup');
+    if(!last) toast('💾 已记录 '+txs.length+' 笔，记得去"汇总"页导出备份！');
+  }
+
+  // reset
+  document.getElementById('iAmt').value  = '';
+  document.getElementById('iCust').value = '';
+  document.getElementById('iNote').value = '';
+  prefillRate();
+  calcLive();
+
+  showReceipt(tx);
+  toast('✅ 交易已记录');
+}
+
+// ══════════════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════════════
+function renderHistory(){
+  // filter chips
+  const allPairs = ['all', ...new Set(txs.map(t=>t.pair))];
+  document.getElementById('filterBar').innerHTML = allPairs.map(p =>
+    `<span class="fchip ${filtPair===p?'on':''}" onclick="setFilt('${p}',this)">${p==='all'?'📋 全部':p}</span>`
+  ).join('');
+
+  const list = document.getElementById('txList');
+  const data = filtPair==='all' ? txs : txs.filter(t=>t.pair===filtPair);
+
+  if(!data.length){
+    list.innerHTML = `<div class="empty-state">
+      <div class="ei">📭</div>
+      <p>暂无交易记录</p>
+      <p style="font-size:12px;margin-top:6px;color:var(--txt3)">在"新交易"添加第一笔</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = data.map(tx => {
+    const pSign  = tx.profit >= 0 ? '+' : '';
+    const pColor = tx.profit >= 0 ? 'green' : 'red';
+    const txOp  = tx.op || '*';
+    const opSym = txOp==='/' ? '÷' : '×';
+    const opCls = txOp==='/' ? 'op-div' : 'op-mul';
+    return `
+    <div class="tx-item" id="txi-${tx.id}">
+      <div class="tx-top">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="tx-pair">${tx.pair}</span>
+            <span class="op-pill ${opCls}">${opSym}</span>
+          </div>
+          <div class="tx-meta">${tx.date} ${tx.time||''} ${tx.customer?'· '+tx.customer:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="tx-field" style="margin:0">
+            <div class="lf">利润</div>
+            <div class="vf ${pColor}" style="font-size:16px">${pSign}${fmt(tx.profit)} ${tx.quote}</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#6366f1;background:#eef2ff;border-radius:7px;
+        padding:5px 10px;margin-bottom:10px;font-weight:700">
+        ${fmt(tx.amount)} ${tx.base} ${opSym} ${tx.rate} = ${fmt(tx.total)} ${tx.quote}
+      </div>
+      <div class="tx-grid">
+        <div class="tx-field"><div class="lf">金额</div><div class="vf">${fmt(tx.amount)} ${tx.base}</div></div>
+        <div class="tx-field"><div class="lf">汇率</div><div class="vf">${tx.rate}</div></div>
+        <div class="tx-field"><div class="lf">总额</div><div class="vf">${fmt(tx.total)} ${tx.quote}</div></div>
+        ${tx.notes ? `<div class="tx-field"><div class="lf">备注</div><div class="vf">${tx.notes}</div></div>` : ''}
+      </div>
+      <div class="tx-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showReceiptById(${tx.id})">📋 收据 / Copy</button>
+        <button class="btn btn-sm" style="background:#fff5f5;color:var(--danger);border:1.5px solid #fecaca"
+          onclick="askDelete(${tx.id})">🗑 删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilt(p, el){
+  filtPair = p;
+  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderHistory();
+}
+
+// ── Delete ────────────────────────────────────────
+let pendingDelId = null;
+
+function askDelete(id){
+  pendingDelId = id;
+  const tx = txs.find(t => t.id===id);
+  document.getElementById('confirmMsg').textContent =
+    tx ? `${tx.pair} · ${tx.date} · ${fmt(tx.amount)} ${tx.base}` : '此操作无法撤销';
+  document.getElementById('confirmOk').onclick = doDelete;
+  document.getElementById('confirmDlg').classList.add('show');
+}
+
+function doDelete(){
+  if(pendingDelId === null) return;
+  txs = txs.filter(t => t.id !== pendingDelId);
+  pendingDelId = null;
+  save();
+  refreshTodayProfit();
+  closeConfirm();
+  renderHistory();
+  toast('🗑 已删除');
+}
+
+function closeConfirm(){
+  document.getElementById('confirmDlg').classList.remove('show');
+  pendingDelId = null;
+}
+
+document.getElementById('confirmDlg').addEventListener('click', function(e){
+  if(e.target === this) closeConfirm();
+});
+
+// ══════════════════════════════════════════════════
+//  SUMMARY
+// ══════════════════════════════════════════════════
+function renderSummary(){
+  const today = toDateStr(new Date());
+  const month = today.slice(0,7);
+  const todayT = txs.filter(t => t.date===today);
+  const monthT = txs.filter(t => t.date.startsWith(month));
+  const todayP = todayT.reduce((s,t) => s+t.profit, 0);
+  const monthP = monthT.reduce((s,t) => s+t.profit, 0);
+
+  document.getElementById('sTotalCount').textContent = txs.length;
+  const sTodayEl = document.getElementById('sTodayP');
+  sTodayEl.textContent = (todayP>=0?'+':'')+fmt2(todayP);
+  sTodayEl.className   = 'sval'+(todayP<0?' neg':'');
+  document.getElementById('sMonthCount').textContent = monthT.length;
+  const sMonthEl = document.getElementById('sMonthP');
+  sMonthEl.textContent = (monthP>=0?'+':'')+fmt2(monthP);
+  sMonthEl.className   = 'sval'+(monthP<0?' neg':'');
+
+  const ps = document.getElementById('pairStats');
+  const allPairs = [...new Set(txs.map(t=>t.pair))];
+  if(!allPairs.length){
+    ps.innerHTML = `<div style="text-align:center;color:var(--txt3);padding:24px">暂无数据</div>`;
+    return;
+  }
+  ps.innerHTML = allPairs.map(p => {
+    const pt = txs.filter(t => t.pair===p);
+    const pp = pt.reduce((s,t) => s+t.profit, 0);
+    const vol = pt.reduce((s,t) => s+t.amount, 0);
+    const q   = pt[0]?.quote || '';
+    return `<div class="ps-item">
+      <div>
+        <div class="pname">${p}</div>
+        <div class="psub">${pt.length} 笔 · 量 ${fmt(vol)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="pp ${pp>=0?'g':'r'}">${pp>=0?'+':''}${fmt(pp)} ${q}</div>
+        <div class="plabel">总利润</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  RATES
+// ══════════════════════════════════════════════════
+function renderRates(){
+  document.getElementById('rateList').innerHTML = rates.map((r,i) => {
+    const op = r.op || '*';
+    const opLabel = op==='/' ? '÷ 除法' : '× 乘法';
+    const spread = r.sell - r.buy;
+    return `
+    <div class="rate-item">
+      <div class="rate-header">
+        <div>
+          <span class="rate-pair">${r.pair}</span>
+          <span class="op-pill ${op==='/'?'op-div':'op-mul'}" style="margin-left:7px">${op==='/'?'÷':'×'}</span>
+        </div>
+        <span class="spread-badge" id="spb-${i}">差价 ${fmtD(spread,4)}</span>
+      </div>
+
+      <div style="margin-bottom:11px">
+        <div class="lbl" style="margin-bottom:6px">计算方式</div>
+        <div class="op-toggle">
+          <button class="op-btn mul ${op==='*'?'on':''}" id="opMul-${i}" onclick="setOp(${i},'*')">
+            × 乘 &nbsp;(${r.pair.split('/')[0]} × 汇率)
+          </button>
+          <button class="op-btn div ${op==='/'?'on':''}" id="opDiv-${i}" onclick="setOp(${i},'/')">
+            ÷ 除 &nbsp;(${r.pair.split('/')[0]} ÷ 汇率)
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:6px" id="opEx-${i}">${opExample(r)}</div>
+      </div>
+
+      <div class="rate-inputs">
+        <div class="buy-f">
+          <label class="lbl">🟢 买入价</label>
+          <input type="number" id="rb-${i}" value="${r.buy}" inputmode="decimal"
+            oninput="liveSpread(${i})" onblur="saveRate(${i})"/>
+        </div>
+        <div class="sell-f">
+          <label class="lbl">🟡 卖出价</label>
+          <input type="number" id="rs-${i}" value="${r.sell}" inputmode="decimal"
+            oninput="liveSpread(${i})" onblur="saveRate(${i})"/>
+        </div>
+      </div>
+      ${r.note ? `<div style="font-size:11px;color:var(--txt3);margin-bottom:8px">📌 ${r.note}</div>` : ''}
+      <div class="rate-footer">
+        <div style="font-size:11px;color:var(--txt3)">例：100 ${r.pair.split('/')[0]} ${op==='/'?'÷':'×'} ${r.sell} = ${fmt(op==='/'?100/r.sell:100*r.sell)} ${r.pair.split('/')[1]}</div>
+        <button class="btn btn-sm" style="background:#fff5f5;color:var(--danger);border:1.5px solid #fecaca"
+          onclick="askDelPair(${i})">🗑 删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function opExample(r){
+  const op = r.op||'*';
+  const [base,quote] = r.pair.split('/');
+  const ex = op==='/' ? `100 ${base} ÷ ${r.sell} = ${fmt(100/r.sell)} ${quote}` : `100 ${base} × ${r.sell} = ${fmt(100*r.sell)} ${quote}`;
+  return `📌 示例: ${ex}`;
+}
+
+function setOp(i, op){
+  rates[i].op = op;
+  save();
+  renderRates();
+  prefillRate();
+  calcLive();
+  toast(`✅ ${rates[i].pair} 改为 ${op==='/'?'除法':'乘法'}`);
+}
+
+function liveSpread(i){
+  const b = parseFloat(document.getElementById('rb-'+i).value)||0;
+  const s = parseFloat(document.getElementById('rs-'+i).value)||0;
+  document.getElementById('spb-'+i).textContent = '差价 '+fmtD(s-b,4);
+}
+
+function saveRate(i){
+  const b = parseFloat(document.getElementById('rb-'+i).value);
+  const s = parseFloat(document.getElementById('rs-'+i).value);
+  if(!isNaN(b)) rates[i].buy  = b;
+  if(!isNaN(s)) rates[i].sell = s;
+  save();
+  prefillRate();
+  toast('✅ 已保存');
+}
+
+// ── Delete pair ───────────────────────────────────
+function askDelPair(i){
+  pendingDelId = 'pair_'+i;
+  document.getElementById('confirmMsg').textContent = `删除货币对 ${rates[i].pair}？`;
+  document.getElementById('confirmOk').onclick = doDelPair;
+  document.getElementById('confirmDlg').classList.add('show');
+}
+
+function doDelPair(){
+  if(typeof pendingDelId !== 'string' || !pendingDelId.startsWith('pair_')) return;
+  const i = parseInt(pendingDelId.split('_')[1]);
+  rates.splice(i, 1);
+  save();
+  pendingDelId = null;
+  closeConfirm();
+  renderRates();
+  renderPairChips();
+  if(rates.length){ selPair = rates[0].pair; prefillRate(); }
+  toast('🗑 已删除货币对');
+}
+
+let newOp = '*';
+function pickNewOp(op){
+  newOp = op;
+  document.getElementById('nOpMul').classList.toggle('on', op==='*');
+  document.getElementById('nOpDiv').classList.toggle('on', op==='/');
+}
+
+function addPair(){
+  const name = document.getElementById('nPair').value.trim().toUpperCase();
+  const buy  = parseFloat(document.getElementById('nBuy').value);
+  const sell = parseFloat(document.getElementById('nSell').value);
+  const note = document.getElementById('nNote').value.trim();
+  if(!name || !name.includes('/')){ toast('⚠️ 格式错误，如：THB/MYR'); return; }
+  if(isNaN(buy) || isNaN(sell) || buy<=0 || sell<=0){ toast('⚠️ 请输入有效汇率'); return; }
+  if(rates.find(r => r.pair===name)){ toast('⚠️ 该货币对已存在'); return; }
+  rates.push({pair:name, buy, sell, op:newOp, note});
+  save();
+  renderRates();
+  renderPairChips();
+  document.getElementById('nPair').value = '';
+  document.getElementById('nBuy').value  = '';
+  document.getElementById('nSell').value = '';
+  document.getElementById('nNote').value = '';
+  newOp = '*';
+  pickNewOp('*');
+  toast(`✅ ${name} 已添加`);
+}
+
+// ══════════════════════════════════════════════════
+//  RECEIPT
+// ══════════════════════════════════════════════════
+function buildReceipt(tx){
+  const ln    = '━━━━━━━━━━━━━━━━━━━━━━━━';
+  const txOp  = tx.op || '*';
+  const opSym = txOp==='/' ? '÷' : '×';
+  const lines = [
+    `📅 ${tx.date}  ${tx.time||''}`,
+    ln,
+    `    货币兑换 / Money Exchange`,
+    ln,
+    tx.customer ? `  👤 ${tx.customer}` : null,
+    `  Pair   : ${tx.pair}`,
+    `  Amount : ${fmt(tx.amount)} ${tx.base}`,
+    `  Rate   : ${opSym} ${tx.rate}`,
+    `  Total  : ${fmt(tx.total)} ${tx.quote}`,
+    ln,
+    tx.notes ? `  📝 ${tx.notes}` : null,
+    `  Thank you! 谢谢 🙏`,
+  ].filter(l => l!==null);
+  return lines.join('\n');
+}
+
+function showReceipt(tx){
+  document.getElementById('receiptTxt').textContent = buildReceipt(tx);
+  const cb = document.getElementById('copyBtn');
+  cb.textContent = '📋 复制发客户';
+  cb.className   = 'btn btn-g';
+  cb._tx = tx;
+  document.getElementById('receiptSheet').classList.add('show');
+}
+
+function showReceiptById(id){
+  const tx = txs.find(t => t.id===id);
+  if(tx) showReceipt(tx);
+}
+
+function doCopy(){
+  const text = document.getElementById('receiptTxt').textContent;
+  const cb   = document.getElementById('copyBtn');
+  const done = () => {
+    cb.textContent = '✅ 已复制！';
+    cb.className   = 'btn btn-ghost';
+    toast('✅ 收据已复制，粘贴到 WhatsApp 发送！');
+    setTimeout(()=>{ cb.textContent='📋 复制发客户'; cb.className='btn btn-g'; }, 2800);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  } else { fallbackCopy(text,done); }
+}
+
+function fallbackCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try{ document.execCommand('copy'); cb(); }
+  catch(e){ toast('⚠️ 复制失败，请手动复制'); }
+  document.body.removeChild(ta);
+}
+
+function closeSheet(){ document.getElementById('receiptSheet').classList.remove('show'); }
+function sheetClickOutside(e){ if(e.target===e.currentTarget) closeSheet(); }
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function toDateStr(d){ return d.toISOString().split('T')[0]; }
+
+function fmt(n, dec=4){
+  if(isNaN(n)||n===null) return '0.00';
+  return parseFloat(n.toFixed(dec)).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:dec});
+}
+function fmt2(n){ return fmt(n,2); }
+function fmtD(n,d){ return isNaN(n)?'0':n.toFixed(d); }
+
+function refreshTodayProfit(){
+  const today = toDateStr(new Date());
+  const p = txs.filter(t=>t.date===today).reduce((s,t)=>s+t.profit,0);
+  const el = document.getElementById('todayProfit');
+  el.textContent = (p>=0?'+':'')+fmt2(p);
+  el.className   = 'pval ' + (p>=0 ? 'pos' : 'neg');
+}
+
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+// ══════════════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════════════
+let calYear, calMonth, calSelDate = null;
+
+function initCal(){
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth(); // 0-based
+}
+
+function calPrev(){
+  calMonth--;
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  calSelDate = null;
+  renderCalendar();
+}
+function calNext(){
+  calMonth++;
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  calSelDate = null;
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('calTitle').textContent = `${calYear}年 ${monthNames[calMonth]}`;
+
+  // build daily profit map for this month
+  const prefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  const dayMap = {}; // date -> {profit, count, quotes}
+  txs.forEach(tx => {
+    if(!tx.date.startsWith(prefix)) return;
+    if(!dayMap[tx.date]) dayMap[tx.date] = {profit:0, count:0, quotes:new Set()};
+    dayMap[tx.date].profit += tx.profit;
+    dayMap[tx.date].count++;
+    dayMap[tx.date].quotes.add(tx.quote);
+  });
+
+  const today = toDateStr(new Date());
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const dowLabels = ['日','一','二','三','四','五','六'];
+
+  let html = dowLabels.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // empty cells before first day
+  for(let i=0; i<firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+  for(let d=1; d<=daysInMonth; d++){
+    const ds   = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const info = dayMap[ds];
+    const isToday   = ds === today;
+    const isSel     = ds === calSelDate;
+    const hasProfit = info && info.profit > 0;
+    const hasLoss   = info && info.profit < 0;
+    let cls = 'cal-day';
+    if(isToday)   cls += ' today';
+    if(isSel)     cls += ' selected';
+    if(hasProfit) cls += ' has-profit';
+    if(hasLoss)   cls += ' has-loss';
+
+    let inner = `<div class="daynum">${d}</div>`;
+    if(info){
+      const sign = info.profit >= 0 ? '+' : '';
+      const pcls = info.profit >= 0 ? 'p' : 'n';
+      const quotes = [...info.quotes];
+      const q = quotes.length === 1 ? quotes[0] : '';
+      inner += `<div class="dayprofit ${pcls}">${sign}${fmt2(info.profit)}<br>${q}</div>`;
+      inner += `<div class="daydot ${pcls}"></div>`;
+    }
+    html += `<div class="${cls}" onclick="selectDay('${ds}')">${inner}</div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+  renderDayDetail(calSelDate);
+}
+
+function selectDay(ds){
+  calSelDate = calSelDate === ds ? null : ds; // toggle
+  renderCalendar();
+}
+
+function renderDayDetail(ds){
+  const el = document.getElementById('dayDetail');
+  if(!ds){ el.innerHTML = ''; return; }
+
+  const dayTxs = txs.filter(t => t.date === ds);
+  if(!dayTxs.length){
+    el.innerHTML = `<div class="card" style="text-align:center;color:var(--txt3);padding:20px">
+      📭 ${ds} 暂无交易</div>`;
+    return;
+  }
+
+  const totalProfit = dayTxs.reduce((s,t) => s+t.profit, 0);
+  const pSign  = totalProfit >= 0 ? '+' : '';
+  const pColor = totalProfit >= 0 ? '#059669' : 'var(--danger)';
+
+  const rows = dayTxs.map(tx => {
+    const txOp  = tx.op||'*';
+    const opSym = txOp==='/'?'÷':'×';
+    const pS    = tx.profit>=0?'+':'';
+    const pC    = tx.profit>=0?'#059669':'var(--danger)';
+    return `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-weight:800;color:var(--primary)">${tx.pair}</span>
+          ${tx.customer?`<span style="font-size:11px;color:var(--txt3)">· ${tx.customer}</span>`:''}
+        </div>
+        <span style="font-weight:800;font-size:14px;color:${pC}">${pS}${fmt2(tx.profit)} ${tx.quote}</span>
+      </div>
+      <div style="font-size:12px;color:#6366f1;font-weight:700">
+        ${fmt(tx.amount)} ${tx.base} ${opSym} ${tx.rate} = ${fmt(tx.total)} ${tx.quote}
+      </div>
+      ${tx.time?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${tx.time}</div>`:''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="card">
+    <div class="day-detail-title">
+      <span>📅 ${ds}（${dayTxs.length} 笔）</span>
+      <span class="dp" style="color:${pColor}">${pSign}${fmt2(totalProfit)}</span>
+    </div>
+    ${rows}
+    <div style="text-align:right;padding-top:10px">
+      <button class="btn btn-ghost btn-sm" onclick="calSelDate=null;renderCalendar()">✖ 关闭</button>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  EXPORT / IMPORT BACKUP
+// ══════════════════════════════════════════════════
+function exportData(){
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    transactions: txs,
+    rates: rates,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const dateStr = toDateStr(new Date()).replace(/-/g,'');
+  a.href     = url;
+  a.download = `汇率备份_${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // save last backup time
+  localStorage.setItem('fx_last_backup', new Date().toISOString());
+  updateBackupInfo();
+  toast('✅ 备份已下载，请妥善保存！');
+}
+
+function importData(e){
+  const file = e.target.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!data.transactions || !data.rates){
+        toast('⚠️ 文件格式错误，请用正确的备份文件');
+        return;
+      }
+      // merge or replace?
+      if(txs.length > 0){
+        // show confirm
+        pendingImportData = data;
+        document.getElementById('confirmMsg').textContent =
+          `导入将合并 ${data.transactions.length} 笔交易记录，与现有 ${txs.length} 笔合并（重复自动去除）`;
+        document.getElementById('confirmOk').textContent = '确认导入';
+        document.getElementById('confirmOk').onclick = doImport;
+        document.getElementById('confirmDlg').classList.add('show');
+      } else {
+        pendingImportData = data;
+        doImport();
+      }
+    } catch(err){
+      toast('⚠️ 读取文件失败，请检查文件');
+    }
+  };
+  reader.readAsText(file);
+  // reset input so same file can be re-selected
+  e.target.value = '';
+}
+
+let pendingImportData = null;
+function doImport(){
+  if(!pendingImportData) return;
+  const data = pendingImportData;
+  pendingImportData = null;
+
+  // merge transactions (deduplicate by id)
+  const existingIds = new Set(txs.map(t => t.id));
+  const newTxs = data.transactions.filter(t => !existingIds.has(t.id));
+  txs = [...txs, ...newTxs].sort((a,b) => b.id - a.id);
+
+  // replace rates with imported (user can re-edit after)
+  rates = data.rates;
+
+  save();
+  closeConfirm();
+  renderPairChips();
+  prefillRate();
+  refreshTodayProfit();
+  updateBackupInfo();
+  toast(`✅ 成功导入 ${newTxs.length} 笔新记录！`);
+
+  // reset confirm button text
+  document.getElementById('confirmOk').textContent = '删除';
+  document.getElementById('confirmOk').onclick = doDelete;
+}
+
+function updateBackupInfo(){
+  const el = document.getElementById('backupInfo');
+  if(!el) return;
+  const last = localStorage.getItem('fx_last_backup');
+  const count = txs.length;
+  if(last){
+    const d = new Date(last);
+    el.textContent = `共 ${count} 笔记录 · 上次备份：${d.toLocaleDateString('zh-CN')} ${d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`;
+  } else {
+    el.textContent = `共 ${count} 笔记录 · 尚未备份，建议马上导出一次 ⚠️`;
+    el.style.color = '#f59e0b';
+  }
+}
+
+initCal();
+</script>
+</body>
+</html>
